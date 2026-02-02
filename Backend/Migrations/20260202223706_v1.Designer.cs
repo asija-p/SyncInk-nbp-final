@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Backend.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260128215553_v1")]
+    [Migration("20260202223706_v1")]
     partial class v1
     {
         /// <inheritdoc />
@@ -24,26 +24,6 @@ namespace Backend.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
-
-            modelBuilder.Entity("Backend.Models.Entities.SavedPicture", b =>
-                {
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("RoomName")
-                        .HasMaxLength(4)
-                        .HasColumnType("character varying(4)");
-
-                    b.Property<Guid>("SaveId")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("SavedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.HasKey("UserId", "RoomName");
-
-                    b.ToTable("savedPictures");
-                });
 
             modelBuilder.Entity("Backend.Models.Entities.User", b =>
                 {

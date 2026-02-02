@@ -12,20 +12,6 @@ namespace Backend.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.CreateTable(
-                name: "savedPictures",
-                columns: table => new
-                {
-                    UserId = table.Column<Guid>(type: "uuid", nullable: false),
-                    RoomName = table.Column<string>(type: "character varying(4)", maxLength: 4, nullable: false),
-                    SaveId = table.Column<Guid>(type: "uuid", nullable: false),
-                    SavedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_savedPictures", x => new { x.UserId, x.RoomName });
-                });
-
-            migrationBuilder.CreateTable(
                 name: "Users",
                 columns: table => new
                 {
@@ -49,9 +35,6 @@ namespace Backend.Migrations
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropTable(
-                name: "savedPictures");
-
             migrationBuilder.DropTable(
                 name: "Users");
         }

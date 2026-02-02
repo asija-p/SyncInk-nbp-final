@@ -12,18 +12,16 @@ public class ReplayService
     private readonly CassandraService _cassandra;
     private readonly RedisService _redis;
     private readonly IHubContext<SyncInkHub> _hubContext;
-    private readonly SavedPictureService _savedPictures;
+
 
 
     public ReplayService(
         CassandraService cassandra,
         RedisService redis,
-        SavedPictureService savedPictures,
         IHubContext<SyncInkHub> hubContext)
     {
         _cassandra = cassandra;
         _redis = redis;
-        _savedPictures = savedPictures;
         _hubContext = hubContext;
     }
 

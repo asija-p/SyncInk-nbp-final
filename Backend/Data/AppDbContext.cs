@@ -7,13 +7,12 @@ namespace Backend.Data;
 public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
 {
     public DbSet<User> Users => Set<User>();
-    public DbSet<SavedPicture> savedPictures => Set<SavedPicture>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
         modelBuilder.Entity<User>().Property(u => u.Id).HasDefaultValueSql("gen_random_uuid()");
         modelBuilder.Entity<User>().HasIndex(u => u.Username).IsUnique();
-        modelBuilder.Entity<SavedPicture>().HasKey(x => new { x.UserId, x.RoomName });
     }
 
 }

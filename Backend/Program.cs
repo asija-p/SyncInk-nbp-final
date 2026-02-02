@@ -30,7 +30,6 @@ builder.Services.AddSingleton<Backend.Redis.RedisService>(sp =>
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<JwtService>();
 builder.Services.AddScoped<ReplayService>();
-builder.Services.AddScoped<SavedPictureService>();
 
 
 builder.Services.AddSwaggerGen();
