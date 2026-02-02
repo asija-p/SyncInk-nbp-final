@@ -1,0 +1,59 @@
+<div class="min-h-screen flex items-center justify-center bg-base-200">
+  <div class="card w-full max-w-md shadow-xl bg-base-100 relative">
+    <div class="card-body pt-10">
+      <h2 class="card-title text-3xl justify-center mb-2">Create Account</h2>
+      <p class="text-center text-base-content/70 mb-6">Draw and collaborate with friends</p>
+      <app-home-btn></app-home-btn>
+      <form class="flex flex-col gap-4" (ngSubmit)="submitRegister()">
+        <div class="form-control w-full">
+          <label class="label py-1">
+            <span class="label-text">Username</span>
+          </label>
+          <input
+            type="text"
+            [(ngModel)]="username"
+            name="username"
+            placeholder="E.g. John"
+            class="input input-bordered w-full"
+            required
+          />
+        </div>
+
+        <div class="form-control w-full">
+          <label class="label py-1">
+            <span class="label-text">Password</span>
+          </label>
+          <input
+            type="password"
+            [(ngModel)]="password"
+            name="password"
+            placeholder="••••••••"
+            class="input input-bordered w-full"
+            required
+          />
+        </div>
+
+        <div class="form-control w-full">
+          <label class="label py-1">
+            <span class="label-text">Confirm Password</span>
+          </label>
+          <input
+            type="password"
+            [(ngModel)]="confirmPassword"
+            name="confirmPassword"
+            placeholder="••••••••"
+            class="input input-bordered w-full"
+            required
+          />
+        </div>
+
+        <button type="submit" class="btn btn-secondary mt-4">Create Account</button>
+      </form>
+
+      <p class="text-center text-sm mt-4">
+        Already have an account?
+        <a routerLink="/auth/login" class="link link-primary">Login</a>
+      </p>
+    </div>
+  </div>
+</div>

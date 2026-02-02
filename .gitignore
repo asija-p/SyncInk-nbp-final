@@ -1,0 +1,111 @@
+# =========================
+# .NET / C# / Backend
+# =========================
+bin/
+obj/
+[Bb]in/
+[Oo]bj/
+.vs/
+.vscode/
+*.user
+*.suo
+*.sln.docstates
+*.pidb
+*.svd
+*.pdb
+*.dbmdl
+*.dbproj.schemaview
+*.cache
+*.ide/
+*.ncb
+*.opendb
+*.opensdf
+*.sdf
+*.suo
+*.userprefs
+*.tmp
+*.log
+*.bak
+*.swp
+*.dotCover
+_ReSharper*/
+*.DotSettings.user
+*.crash
+*.lock.json
+*.nuget.props
+*.nuget.targets
+
+# Rider
+.idea/
+*.sln.iml
+
+# ASP.NET / IIS
+wwwroot/lib/
+App_Data/
+aspnetcore-debug.log
+publish/
+
+# =========================
+# Node / Angular Frontend
+# =========================
+node_modules/
+dist/
+build/
+.angular/
+.cache/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json   
+yarn.lock           
+.env
+.env.local
+.env.development
+.env.production
+coverage/
+.nginx/
+
+# =========================
+# Docker (ako koristiš)
+# =========================
+docker-compose.override.yml
+*.env
+*.env.local
+*.env.*.local
+
+# =========================
+# Redis
+# =========================
+dump.rdb
+redis.log
+*.aof
+
+# =========================
+# Cassandra
+# =========================
+commitlog/
+saved_caches/
+hints/
+*.db
+*.crc
+
+# =========================
+# SignalR / Logs / Runtime
+# =========================
+logs/
+*.log
+*.trc
+*.out
+
+# =========================
+# OS-specific
+# =========================
+# Windows
+Thumbs.db
+Desktop.ini
+
+# macOS
+.DS_Store
+
+# Linux
+*~

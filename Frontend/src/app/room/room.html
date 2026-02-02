@@ -1,0 +1,18 @@
+<div class="room">
+  <aside class="left">
+    <app-brush-settings></app-brush-settings>
+  </aside>
+
+  <div class="canvas">
+    <app-canvas #canvasComp [width]="1000" [height]="700"></app-canvas>
+  </div>
+
+  <aside class="right">
+    <button class="btn btn-secondary" (click)="LeaveRoom()">Leave Room</button>
+
+    <app-users-list></app-users-list>
+
+    <button class="btn btn-primary" (click)="undo()" [disabled]="isReplay">⬅ Undo</button>
+    <button class="btn btn-primary" (click)="redo()" [disabled]="isReplay">➡ Redo</button>
+  </aside>
+</div>

@@ -1,0 +1,10 @@
+<div class="navbar bg-base-100 shadow-sm z-20 flex ml-auto flex gap-2">
+  <div class="navbar-start">
+    <button *ngIf="route.url !== '/home'" class="btn btn-outline btn-sm mr-2" routerLink="/home">
+      Home
+    </button>
+  </div>
+  <div class="navbar-end">
+    <app-nav-btns></app-nav-btns>
+  </div>
+</div>

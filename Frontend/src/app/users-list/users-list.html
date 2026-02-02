@@ -1,0 +1,9 @@
+<div class="users-list">
+  <h3>Users in Room</h3>
+  <ul>
+    <li *ngFor="let user of users">
+      {{ user }}
+      <span class="drawing-indicator" *ngIf="drawingStates[user]"> is drawing... </span>
+    </li>
+  </ul>
+</div>

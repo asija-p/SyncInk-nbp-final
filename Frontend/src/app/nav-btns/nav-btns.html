@@ -1,0 +1,21 @@
+<ng-container *ngIf="auth.isLoaded()">
+  <div *ngIf="!auth.currentUser(); else loggedIn" class="flex gap-2">
+    <a routerLink="/auth/login" class="btn btn-outline btn-sm">Login</a>
+    <a routerLink="/auth/register" class="btn btn-secondary btn-sm">Join Now</a>
+  </div>
+
+  <ng-template #loggedIn>
+    <button
+      class="btn btn-circle btn-secondary avatar avatar-online avatar-placeholder mr-4"
+      (click)="goToProfile()"
+    >
+      <div class="bg-neutral text-neutral-content w-10 rounded-full">
+        <span class="text-xl">A</span>
+      </div>
+    </button>
+
+    <button class="btn btn-error btn-sm" (click)="logout()">Logout</button>
+  </ng-template>
+</ng-container>
+
+<div *ngIf="!auth.isLoaded()" class="loading loading-spinner loading-sm"></div>

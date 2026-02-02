@@ -1,0 +1,56 @@
+using Backend.Cassandra;
+using Backend.Cassandra.Models;
+using Backend.Redis;
+using Microsoft.AspNetCore.SignalR;
+using SyncInk.Hubs;
+using System.Text.Json;
+
+namespace Backend.Services;
+
+public class ReplayService
+{
+    private readonly CassandraService _cassandra;
+    private readonly RedisService _redis;
+    private readonly IHubContext<SyncInkHub> _hubContext;
+    private readonly SavedPictureService _savedPictures;
+
+
+    public ReplayService(
+        CassandraService cassandra,
+        RedisService redis,
+        SavedPictureService savedPictures,
+        IHubContext<SyncInkHub> hubContext)
+    {
+        _cassandra = cassandra;
+        _redis = redis;
+        _savedPictures = savedPictures;
+        _hubContext = hubContext;
+    }
+
+
+    public async Task<int> StartReplayAsync(Guid userId, string roomName, Guid saveId)
+    {
+        List<StrokeEntity> entities =
+            await _cassandra.GetSnapshotStrokesAsync(userId, roomName, saveId);
+
+        var sortedEntities = entities.OrderBy(e => e.StrokeDate).ToList();
+
+        foreach (var entity in sortedEntities)
+        {
+            var stroke = new Stroke
+            {
+                Points = JsonSerializer.Deserialize<Position[]>(entity.PointsJson),
+                Color = entity.Color,
+                Size = entity.Size,
+                StrokeDate = entity.StrokeDate
+            };
+
+            await _redis.SaveStroke(stroke, roomName);
+            await _hubContext.Clients.Group(roomName).SendAsync("ReceiveStroke", stroke);
+            await Task.Delay(100);
+        }
+
+        return sortedEntities.Count;
+    }
+
+}

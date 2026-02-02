@@ -1,0 +1,82 @@
+<app-nav-bar></app-nav-bar>
+
+<div class="min-h-screen bg-base-200 p-8">
+  <div class="max-w-5xl mx-auto">
+    <div class="flex justify-between items-center mb-8">
+      <h1 class="text-3xl font-bold italic">My Saved <span class="text-primary">Inks</span></h1>
+      <div class="stats shadow bg-base-100">
+        <div class="stat">
+          <div class="stat-title">Total Saves</div>
+          <div class="stat-value text-primary">{{ savedPictures.length }}</div>
+        </div>
+      </div>
+    </div>
+
+    <div *ngIf="loading" class="flex justify-center p-20">
+      <span class="loading loading-dots loading-lg text-primary"></span>
+    </div>
+
+    <div *ngIf="!loading && savedPictures.length === 0" class="alert alert-info shadow-lg">
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        fill="none"
+        viewBox="0 0 24 24"
+        class="stroke-current shrink-0 w-6 h-6"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+        ></path>
+      </svg>
+      <span>You haven't saved any drawings yet!</span>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" *ngIf="!loading">
+      <div
+        *ngFor="let pic of savedPictures"
+        class="card bg-base-100 shadow-xl hover:shadow-2xl transition-all border-t-4 border-primary"
+      >
+        <div class="card-body">
+          <h2 class="card-title justify-between">
+            Room: {{ pic.roomName }}
+            <div class="badge badge-secondary outline">
+              Save ID: {{ pic.saveId.substring(0, 4) }}
+            </div>
+          </h2>
+          <p class="text-sm opacity-70">Saved on: {{ pic.savedAt | date: 'medium' }}</p>
+
+          <div class="card-actions justify-end mt-4">
+            <button
+              (click)="initiateReplay(pic.roomName, pic.saveId)"
+              class="btn btn-primary btn-sm gap-2"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-4 w-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"
+                />
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+              Watch Replay
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
