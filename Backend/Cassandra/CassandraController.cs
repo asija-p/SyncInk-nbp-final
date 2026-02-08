@@ -16,6 +16,8 @@ namespace Backend.Controllers
         private readonly CassandraService _cassandra;
         private readonly RedisService _redis;
 
+        private readonly AppDbContext _db;
+
         public CassandraController(
             CassandraService cassandra,
             RedisService redis,
@@ -24,6 +26,7 @@ namespace Backend.Controllers
         {
             _cassandra = cassandra;
             _redis = redis;
+            _db = db;
         }
 
         [HttpPost("save")]
@@ -43,6 +46,7 @@ namespace Backend.Controllers
             var userId = Guid.Parse(sub);
 
             var redisStrokes = await _redis.GetAllStrokes(roomName);
+
             if (redisStrokes == null || redisStrokes.Count == 0)
                 return BadRequest("No strokes found for this room.");
 
@@ -70,6 +74,54 @@ namespace Backend.Controllers
                 savedAt
             });
         }
+
+
+        [HttpGet("replay-timeline")]
+        public async Task<IActionResult> GetReplayTimeline([FromQuery] string roomName)
+        {
+            if (string.IsNullOrEmpty(roomName))
+                return BadRequest("Room name is required.");
+
+            var counters = await _cassandra.GetActivityCountersAsync(roomName);
+
+            var activeStates = await _cassandra.GetActiveUsersAsync(roomName);
+
+            var allUserIds = activeStates.SelectMany(a => a.ActiveUsers).Distinct().ToList();
+            var usernamesMap = await GetUsernamesFromPostgresAsync(allUserIds); // returns Dictionary<Guid, string>
+
+            var timeline = counters.Select(c =>
+            {
+                var activeGuids = activeStates.FirstOrDefault(a => a.MinuteBucket == c.MinuteBucket)?.ActiveUsers ?? new List<Guid>();
+                var activeUsernames = activeGuids
+                    .Where(id => usernamesMap.ContainsKey(id))
+                    .Select(id => usernamesMap[id])
+                    .ToList();
+
+                return new
+                {
+                    minuteBucket = c.MinuteBucket,
+                    strokesCompleted = c.StrokesCompleted,
+                    undos = c.Undos,
+                    redos = c.Redos,
+                    activeUsers = activeUsernames
+                };
+            }).OrderBy(t => t.minuteBucket).ToList();
+
+            return Ok(timeline);
+        }
+
+        private async Task<Dictionary<Guid, string>> GetUsernamesFromPostgresAsync(List<Guid> userIds)
+        {
+            // Assume you have some DbContext injected
+            var users = await _db.Users
+                .Where(u => userIds.Contains(u.Id))
+                .Select(u => new { u.Id, u.Username })
+                .ToListAsync();
+
+            return users.ToDictionary(u => u.Id, u => u.Username);
+        }
+
+
 
     }
 }

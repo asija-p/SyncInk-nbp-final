@@ -64,7 +64,13 @@ export class Canvas implements AfterViewInit {
 
     const roomId = this.route.snapshot.paramMap.get('roomId');
     if (roomId) {
-      setTimeout(() => this.connection.getHistory(roomId), 200);
+      setTimeout(() => {
+        if (isReplay) {
+          this.connection.getReplayHistory(roomId);
+        } else {
+          this.connection.getHistory(roomId);
+        }
+      }, 200);
     }
   }
 

@@ -19,10 +19,18 @@ namespace Backend.Redis
             await _db.ListRightPushAsync($"room:{room}:strokes", JsonSerializer.Serialize(stroke));
         }
 
+
+
         public async Task ClearRoom(string room)
         {
-            await _db.KeyDeleteAsync($"room:{room}:strokes");
+            var server = _db.Multiplexer.GetServer("localhost", 6379);
+
+            foreach (var key in server.Keys(pattern: $"room:{room}:*"))
+            {
+                await _db.KeyDeleteAsync(key);
+            }
         }
+
 
         public async Task<List<string>> GetAllStrokes(string room)
         {
@@ -102,8 +110,7 @@ namespace Backend.Redis
 
             if (value.IsNullOrEmpty)
                 return null;
-
-            return (string)value;
+            return value;
         }
 
         public async Task SetRoomStrokesExpire(string roomId, TimeSpan ttl)
@@ -191,11 +198,24 @@ namespace Backend.Redis
             return _db.KeyDeleteAsync(ReplayKey(room));
         }
 
-        public Task PushReplayStroke(string room, Stroke stroke)
+        public async Task PushReplayStroke(string room, Stroke stroke, Guid userId)
         {
+
             var json = JsonSerializer.Serialize(stroke);
-            return _db.ListRightPushAsync(ReplayKey(room), json);
+            await _db.ListRightPushAsync(ReplayKey(room), json);
+
+            var userIdStr = userId.ToString();
+            await _db.StringSetAsync($"user:{userIdStr}:room", room);
+
+
+            await _db.SetAddAsync($"room:{room}:users", userIdStr);
+            await _db.HashSetAsync($"user:{userIdStr}", new HashEntry[]
+            {
+        new("username", "ReplayUser")
+            });
         }
+
+
 
         public Task SetReplayExpire(string room, TimeSpan ttl)
         {

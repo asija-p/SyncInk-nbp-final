@@ -1,18 +1,29 @@
-<div class="room">
+<div class="room flex">
   <aside class="left">
     <app-brush-settings></app-brush-settings>
   </aside>
 
-  <div class="canvas">
-    <app-canvas #canvasComp [width]="1000" [height]="700"></app-canvas>
+  <div class="main flex">
+    <div class="canvas">
+      <app-canvas #canvasComp [width]="1000" [height]="700"></app-canvas>
+    </div>
+
+    <!-- Vertical timeline next to canvas -->
+    <div class="timeline ml-4">
+      <app-replay-timeline *ngIf="isReplay" [nodes]="timelineNodes"></app-replay-timeline>
+    </div>
   </div>
 
-  <aside class="right">
-    <button class="btn btn-secondary" (click)="LeaveRoom()">Leave Room</button>
+  <aside class="right flex flex-col gap-2">
+    <button class="btn btn-secondary btn-soft" (click)="LeaveRoom()">Leave Room</button>
 
-    <app-users-list></app-users-list>
+    <app-users-list [isReplay]="isReplay"></app-users-list>
 
-    <button class="btn btn-primary" (click)="undo()" [disabled]="isReplay">⬅ Undo</button>
-    <button class="btn btn-primary" (click)="redo()" [disabled]="isReplay">➡ Redo</button>
+    <div class="flex flex-row pl-12 pr-12">
+      <button class="btn btn-info btn-soft mr-4" (click)="undo()" [disabled]="isReplay">
+        ⬅ Undo
+      </button>
+      <button class="btn btn-info btn-soft" (click)="redo()" [disabled]="isReplay">Redo ➡</button>
+    </div>
   </aside>
 </div>

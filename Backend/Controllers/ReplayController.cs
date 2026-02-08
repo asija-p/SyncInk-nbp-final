@@ -52,7 +52,6 @@ public class ReplayController : ControllerBase
                 request.RoomName,
                 request.SaveId
             );
-
             return Ok(new { message = "Replay started successfully", strokeCount });
 
         }

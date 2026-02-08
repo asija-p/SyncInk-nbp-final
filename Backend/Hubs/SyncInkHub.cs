@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using System.Text.Json;
+using Backend.Cassandra;
 using Backend.Redis;
 using Microsoft.AspNetCore.SignalR;
 
@@ -8,11 +9,14 @@ namespace SyncInk.Hubs
     public class SyncInkHub : Hub
     {
         private readonly RedisService _redis;
+        private readonly CassandraService _cassandra;
 
-        public SyncInkHub(RedisService redis)
+        public SyncInkHub(RedisService redis, CassandraService cassandra)
         {
             _redis = redis;
+            _cassandra = cassandra;
         }
+
 
         public async Task SendStroke(Stroke stroke, string strokeId)
         {
@@ -31,15 +35,24 @@ namespace SyncInk.Hubs
 
         public async Task CompleteStroke(Stroke stroke, string strokeId)
         {
-            var userId = Context.User!.FindFirst(ClaimTypes.NameIdentifier)!.Value;
-            var room = await _redis.GetRoomByUser(Guid.Parse(userId));
+            var userId = Guid.Parse(Context.User!.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+
+            // Keep Redis only for live stroke state (optional)
+            var room = await _redis.GetRoomByUser(userId);
             if (room == null) return;
 
-            stroke.UserId = userId;
+            stroke.UserId = userId.ToString();
             stroke.Id = strokeId;
 
-            await _redis.CompleteStroke(room, userId, strokeId, stroke);
+            await _redis.CompleteStroke(room, userId.ToString(), strokeId, stroke);
+
+            // Cassandra-only stats tracking
+            var now = DateTime.UtcNow;
+            await _cassandra.IncrementCounterAsync(room, now, "strokes_completed");
+            await _cassandra.MarkUserActiveAsync(room, userId, now);
         }
+
+
 
         //room
 
@@ -103,7 +116,10 @@ namespace SyncInk.Hubs
              );
 
             var room = await _redis.GetRoomByUser(userId);
-            if (room == null) return;
+            if (room == null)
+            {
+                return;
+            }
 
             await Groups.RemoveFromGroupAsync(Context.ConnectionId, room);
 
@@ -113,6 +129,7 @@ namespace SyncInk.Hubs
             if (users.Count == 0)
             {
                 await _redis.ClearRoom(room);
+                await _redis.ClearReplay(room);
             }
             await Clients.Group(room)
                 .SendAsync("UsersUpdated", users);
@@ -187,8 +204,13 @@ namespace SyncInk.Hubs
             if (stroke != null)
             {
                 await Clients.Group(room).SendAsync("StrokeRemoved", stroke);
+
+                var now = DateTime.UtcNow;
+                await _cassandra.IncrementCounterAsync(room, now, "undos");
+                await _cassandra.MarkUserActiveAsync(room, Guid.Parse(stroke.UserId), now);
             }
         }
+
 
         public async Task RedoStroke()
         {
@@ -200,8 +222,13 @@ namespace SyncInk.Hubs
             if (stroke != null)
             {
                 await Clients.Group(room).SendAsync("ReceiveStroke", stroke);
+
+                var now = DateTime.UtcNow;
+                await _cassandra.IncrementCounterAsync(room, now, "redos");
+                await _cassandra.MarkUserActiveAsync(room, Guid.Parse(stroke.UserId), now);
             }
         }
+
 
         // replay
 

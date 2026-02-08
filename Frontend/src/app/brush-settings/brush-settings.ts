@@ -7,6 +7,7 @@ import { selectBrushColor, selectBrushSize } from '../store/syncink.selectors';
 import { MatSliderModule } from '@angular/material/slider';
 import { FormsModule } from '@angular/forms';
 import { BrushSettingsService } from './brush-settings.service';
+import { ActivatedRoute } from '@angular/router';
 
 @Component({
   selector: 'app-brush-settings',
@@ -19,11 +20,14 @@ export class BrushSettings {
   private sizeSubject = new Subject<number>();
   color: string;
   size: number;
-
+  public isReplay = false;
   constructor(
     private store: Store,
+    private route: ActivatedRoute,
     private brushSettingsService: BrushSettingsService,
   ) {
+    const queryParams = this.route.snapshot.queryParamMap;
+    this.isReplay = queryParams.get('replay') === 'true';
     this.store.select(selectBrushColor).subscribe((value) => {
       this.color = value;
     });

@@ -1,6 +1,6 @@
-<div class="users-list">
-  <h3>Users in Room</h3>
-  <ul>
+<div class="users-list bg-base-300">
+  <h3>{{ isReplay ? 'Watching Replay' : 'Users in Room' }}</h3>
+  <ul *ngIf="!isReplay">
     <li *ngFor="let user of users">
       {{ user }}
       <span class="drawing-indicator" *ngIf="drawingStates[user]"> is drawing... </span>

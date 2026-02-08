@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, Input } from '@angular/core';
 import { Subscription, combineLatest } from 'rxjs';
 import { SignalrService } from '../signalr.service';
 import { CommonModule } from '@angular/common';
@@ -7,9 +7,11 @@ import { CommonModule } from '@angular/common';
   selector: 'app-users-list',
   imports: [CommonModule],
   templateUrl: './users-list.html',
-  styleUrl: './users-list.scss',
+  styleUrls: ['./users-list.scss'], // fixed typo: styleUrl -> styleUrls
 })
 export class UsersList implements OnInit, OnDestroy {
+  @Input() isReplay: boolean = false; // <-- added input to receive flag from parent
+
   users: string[] = [];
   drawingStates: { [username: string]: boolean } = {};
   private sub!: Subscription;

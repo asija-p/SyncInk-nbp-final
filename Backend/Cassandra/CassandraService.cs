@@ -1,6 +1,7 @@
 using Cassandra;
 using System.Text.Json;
 using Backend.Cassandra.Models;
+using Backend.Models.Entities;
 
 namespace Backend.Cassandra;
 
@@ -34,9 +35,10 @@ public class CassandraService
                     points_json,
                     color,
                     size,
-                    saved_at
+                    saved_at,
+                    visible
                 )
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 USING TTL ?
             ");
 
@@ -111,6 +113,10 @@ public class CassandraService
             var stroke = JsonSerializer.Deserialize<Stroke>(strokeJson);
             if (stroke == null) continue;
 
+
+            if (!stroke.Visible)
+                continue;
+
             var bound = _insertStmt.Bind(
                 userId,
                 roomName,
@@ -121,6 +127,7 @@ public class CassandraService
                 stroke.Color,
                 stroke.Size,
                 savedAt,
+                stroke.Visible,
                 7 * 24 * 3600                 // TTL 1 week
             );
 
@@ -143,11 +150,12 @@ public class CassandraService
 
             strokes.Add(new Stroke
             {
-                Points = points.ToArray(),  
+                Points = points.ToArray(),
                 Color = row.GetValue<string>("color"),
                 Size = Convert.ToInt32(row.GetValue<double>("size")),
                 StrokeDate = row.GetValue<DateTime>("stroke_date")
             });
+
         }
 
         return strokes;
@@ -156,7 +164,7 @@ public class CassandraService
     public async Task<List<StrokeEntity>> GetSnapshotStrokesAsync(Guid userId, string roomName, Guid saveId)
     {
         var selectStmt = _session.Prepare(@"
-        SELECT user_id, room_name, save_id, stroke_id, color, points_json, saved_at, size, stroke_date
+        SELECT user_id, room_name, save_id, stroke_id, color, points_json, saved_at, size, stroke_date,visible
         FROM strokes_by_snapshot 
         WHERE user_id = ? AND room_name = ? AND save_id = ?");
 
@@ -176,10 +184,130 @@ public class CassandraService
                 PointsJson = row.GetValue<string>("points_json"),
                 Size = row.GetValue<double>("size"),
                 StrokeDate = row.GetValue<DateTime>("stroke_date"),
-                SavedAt = row.GetValue<DateTime>("saved_at")
+                SavedAt = row.GetValue<DateTime>("saved_at"),
+                Visible = row.GetValue<bool>("visible")
             });
         }
         return list;
     }
+
+
+
+    //Activity functionality
+
+    public async Task IncrementCounterAsync(
+    string roomName,
+    DateTime timestamp,
+    string counterColumn
+)
+    {
+        var bucket = GetMinuteBucket(timestamp);
+
+        var cql = $@"
+        UPDATE drawing_activity_counters
+        SET {counterColumn} = {counterColumn} + 1
+        WHERE room_name = ? AND minute_bucket = ?";
+
+        var stmt = _session.Prepare(cql);
+        var bound = stmt.Bind(roomName, bucket);
+
+        await _session.ExecuteAsync(bound);
+    }
+
+    public async Task MarkUserActiveAsync(string roomName, Guid userId, DateTime timestamp)
+    {
+        var bucket = GetMinuteBucket(timestamp); // timestamp in UTC
+
+        var cql = @"
+        UPDATE drawing_activity_state
+        SET active_users = active_users + ?
+        WHERE room_name = ? AND minute_bucket = ?";
+
+        var stmt = _session.Prepare(cql);
+
+        var activeUsers = new HashSet<Guid> { userId };
+
+        var bound = stmt.Bind(activeUsers, roomName, bucket); // bind Guid set, string, DateTime
+        await _session.ExecuteAsync(bound);
+    }
+
+
+    private static DateTime GetMinuteBucket(DateTime utcNow)
+    {
+        return new DateTime(
+            utcNow.Year,
+            utcNow.Month,
+            utcNow.Day,
+            utcNow.Hour,
+            utcNow.Minute,
+            0,
+            DateTimeKind.Utc
+        );
+    }
+
+
+
+    // Timeline counter row
+    public class DrawingActivityCounter
+    {
+        public DateTime MinuteBucket { get; set; }
+        public long StrokesCompleted { get; set; }
+        public long Undos { get; set; }
+        public long Redos { get; set; }
+    }
+
+    public class DrawingActivityState
+    {
+        public DateTime MinuteBucket { get; set; }
+        public List<Guid> ActiveUsers { get; set; } = new();
+    }
+
+    public async Task<List<DrawingActivityCounter>> GetActivityCountersAsync(string roomName)
+    {
+        var stmt = _session.Prepare(@"
+        SELECT minute_bucket, strokes_completed, undos, redos
+        FROM drawing_activity_counters
+        WHERE room_name = ?");
+
+        var bound = stmt.Bind(roomName);
+        var rows = await _session.ExecuteAsync(bound);
+
+        var result = new List<DrawingActivityCounter>();
+        foreach (var row in rows)
+        {
+            result.Add(new DrawingActivityCounter
+            {
+                MinuteBucket = row.GetValue<DateTime>("minute_bucket"),
+                StrokesCompleted = row.GetValue<long?>("strokes_completed") ?? 0,
+                Undos = row.GetValue<long?>("undos") ?? 0,
+                Redos = row.GetValue<long?>("redos") ?? 0
+            });
+        }
+        return result;
+    }
+
+    public async Task<List<DrawingActivityState>> GetActiveUsersAsync(string roomName)
+    {
+        var stmt = _session.Prepare(@"
+        SELECT minute_bucket, active_users
+        FROM drawing_activity_state
+        WHERE room_name = ?");
+
+        var bound = stmt.Bind(roomName);
+        var rows = await _session.ExecuteAsync(bound);
+
+        var result = new List<DrawingActivityState>();
+        foreach (var row in rows)
+        {
+            var users = row.GetValue<IEnumerable<Guid>>("active_users") ?? Array.Empty<Guid>();
+            result.Add(new DrawingActivityState
+            {
+                MinuteBucket = row.GetValue<DateTime>("minute_bucket"),
+                ActiveUsers = users.ToList()
+            });
+        }
+        return result;
+    }
+
 }
 

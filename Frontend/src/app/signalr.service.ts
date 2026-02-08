@@ -35,6 +35,10 @@ export class SignalrService {
       this.strokeSubject.next(stroke);
     });
 
+    this.hubConnection.on('ReceiveReplayData', (strokes: Stroke[]) => {
+      strokes.forEach((stroke) => this.strokeSubject.next(stroke));
+    });
+
     this.hubConnection.on('StrokeRemoved', (stroke: Stroke) => {
       this.strokeRemovedSubject.next(stroke);
     });
@@ -76,6 +80,12 @@ export class SignalrService {
   async getHistory(roomName: string) {
     if (this.hubConnection.state === signalR.HubConnectionState.Connected) {
       await this.hubConnection.invoke('GetHistory', roomName);
+    }
+  }
+
+  async getReplayHistory(roomName: string) {
+    if (this.hubConnection.state === signalR.HubConnectionState.Connected) {
+      await this.hubConnection.invoke('GetReplayHistory', roomName);
     }
   }
 

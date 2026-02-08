@@ -28,25 +28,31 @@ public class ReplayService
 
     public async Task<int> StartReplayAsync(Guid userId, string roomName, Guid saveId)
     {
-        List<StrokeEntity> entities =
-            await _cassandra.GetSnapshotStrokesAsync(userId, roomName, saveId);
+        List<StrokeEntity> entities = await _cassandra.GetSnapshotStrokesAsync(userId, roomName, saveId);
 
         var sortedEntities = entities.OrderBy(e => e.StrokeDate).ToList();
+
+        var replayStrokes = new List<Stroke>();
 
         foreach (var entity in sortedEntities)
         {
             var stroke = new Stroke
             {
+                Id = entity.StrokeId.ToString(),
                 Points = JsonSerializer.Deserialize<Position[]>(entity.PointsJson),
                 Color = entity.Color,
                 Size = entity.Size,
                 StrokeDate = entity.StrokeDate
             };
 
-            await _redis.SaveStroke(stroke, roomName);
-            await _hubContext.Clients.Group(roomName).SendAsync("ReceiveStroke", stroke);
-            await Task.Delay(100);
+            await _redis.PushReplayStroke(roomName, stroke, userId);
+            replayStrokes.Add(stroke);
+
+            await Task.Delay(100); // optional delay to simulate replay timing
         }
+
+        // Send all strokes at once to frontend
+        await _hubContext.Clients.Group(roomName).SendAsync("ReceiveReplayData", replayStrokes);
 
         return sortedEntities.Count;
     }

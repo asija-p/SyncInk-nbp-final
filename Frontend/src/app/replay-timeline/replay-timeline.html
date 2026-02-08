@@ -1,0 +1,26 @@
+<div *ngIf="nodes.length > 0" class="p-4">
+  <div class="flex flex-col relative">
+    <div
+      *ngFor="let node of nodes; let i = index"
+      class="flex items-center mb-6 group relative h-16"
+    >
+      <div class="absolute left-4 top-0 bottom-0 w-1 h-22 bg-gray-300"></div>
+
+      <div
+        class="z-10 w-8 h-8 rounded-full bg-info flex items-center justify-center text-white font-bold"
+      >
+        {{ i + 1 }}
+      </div>
+
+      <div
+        class="ml-6 p-3 rounded shadow-lg bg-white border border-gray-200 opacity-0 group-hover:opacity-100 transition-opacity duration-200 absolute -left-72 w-64"
+      >
+        <p><strong>Time:</strong> {{ node.minuteBucket }}</p>
+        <p><strong>Strokes:</strong> {{ node.strokesCompleted }}</p>
+        <p><strong>Undos:</strong> {{ node.undos }}</p>
+        <p><strong>Redos:</strong> {{ node.redos }}</p>
+        <p><strong>Active Users:</strong> {{ node.activeUsers.join(', ') }}</p>
+      </div>
+    </div>
+  </div>
+</div>

@@ -4,6 +4,7 @@ import { Injectable, signal } from '@angular/core'; // Added signal
 import { UserProfile } from '../shared/interfaces/user.interface';
 import { tap } from 'rxjs';
 import { SignalrService } from '../signalr.service';
+import { Router } from '@angular/router';
 
 export interface LoginDto {
   username: string;
@@ -27,6 +28,7 @@ export class AuthService {
   constructor(
     private http: HttpClient,
     private signalr: SignalrService,
+    private router: Router,
   ) {
     this.checkAuth().subscribe();
   }
@@ -70,8 +72,11 @@ export class AuthService {
   }
 
   logout() {
-    return this.http
-      .post<void>(`${this.API_URL}/auth/logout`, {}, { withCredentials: true })
-      .pipe(tap(() => this.currentUser.set(null)));
+    return this.http.post<void>(`${this.API_URL}/auth/logout`, {}, { withCredentials: true }).pipe(
+      tap(() => {
+        this.currentUser.set(null); // clear user
+        this.router.navigate(['/home']); // navigate to home
+      }),
+    );
   }
 }
